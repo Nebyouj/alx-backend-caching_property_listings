@@ -21,3 +21,23 @@ def get_redis_cache_metrics():
         "misses": misses,
         "hit_ratio": ratio,
     }
+
+import logging
+from django_redis import get_redis_connection
+
+logger = logging.getLogger(__name__)
+
+def get_redis_cache_metrics():
+    redis_conn = get_redis_connection("default")
+    info = redis_conn.info("stats")
+    hits = info.get("keyspace_hits", 0)
+    misses = info.get("keyspace_misses", 0)
+    total_requests = hits + misses
+    hit_ratio = hits / total_requests if total_requests > 0 else 0
+
+    logger.error(f"Redis Cache Metrics: hits={hits}, misses={misses}, hit_ratio={hit_ratio:.2f}")
+    return {
+        "hits": hits,
+        "misses": misses,
+        "hit_ratio": hit_ratio,
+    }
